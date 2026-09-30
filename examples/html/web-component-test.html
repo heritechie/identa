@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Identa Web Component — Browser Test Fixture</title>
+    <style>
+      body {
+        font: 14px system-ui, -apple-system, sans-serif;
+        padding: 1rem;
+        max-width: 720px;
+        margin: 0 auto;
+      }
+      h1 {
+        font-size: 1.1rem;
+      }
+      p.note {
+        color: #555;
+        font-size: 0.85rem;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Identa Web Component — Browser Test Fixture</h1>
+    <p class="note">
+      This page is loaded by Playwright to verify the
+      <code>&lt;identa-verification&gt;</code> custom element behaves
+      correctly in a real Chromium browser. It is not a production
+      page; the fixture exposes <code>window.__IDENTA_TEST__</code> for
+      automated driving.
+    </p>
+    <hr />
+    <main>
+      <identa-verification></identa-verification>
+    </main>
+    <script type="module" src="/examples/html/dist/fixture.bundle.js"></script>
+  </body>
+</html>

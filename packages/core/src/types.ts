@@ -84,8 +84,28 @@ export interface VerifyOptions {
 /**
  * Engine boundary. The core does not know which model runs behind this
  * interface; engines/face implements it.
+ *
+ * The engine is responsible for:
+ *   - loading model weights (if async, expose `load()`; consumer calls
+ *     it before `verify()`)
+ *   - detecting faces in `ImageInput`
+ *   - extracting / cropping / aligning the face (internally, using
+ *     detection bounding boxes and any returned landmarks)
+ *   - producing a face `Embedding`
+ *
+ * To surface a documented failure, throw a `FaceEngineError` whose
+ * `code` is one of the `VerificationErrorCode` values. Any other thrown
+ * error is collapsed to `MODEL_ERROR`.
  */
 export interface FaceEngine {
+  /**
+   * Optional one-time initialization (load model weights, warm up
+   * runtimes). Consumer is responsible for calling this before
+   * `verify()` if needed. `verify()` does NOT call `load()` itself
+   * because the engine may already be loaded by a long-lived host
+   * (e.g. a web component).
+   */
+  load?(): Promise<void>;
   detect(image: ImageInput): Promise<ReadonlyArray<FaceDetection>>;
   embed(face: FaceInput): Promise<Embedding>;
 }

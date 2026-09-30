@@ -15,3 +15,4 @@ export {
 export { verify } from "./verify.js";
 export { cosineSimilarity, unableToVerify } from "./similarity.js";
 export { applyThreshold, DEFAULT_THRESHOLD } from "./threshold.js";
+export { FaceEngineError } from "./errors.js";

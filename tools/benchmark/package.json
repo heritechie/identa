@@ -1,0 +1,15 @@
+{
+  "name": "@identa/benchmark",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Vendor-neutral face embedding evaluation harness (POC)",
+  "scripts": {
+    "build": "tsc -b",
+    "typecheck": "tsc -b --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@identa/core": "workspace:*"
+  }
+}

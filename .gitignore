@@ -13,3 +13,14 @@ coverage/
 .playwright/
 playwright-report/
 test-results/
+
+# Test-fixture browser bundle (rebuilt via `pnpm build:fixture`).
+examples/html/dist/
+
+# Benchmark datasets — biometric data must never be committed.
+dataset/
+datasets/
+*.ktp.jpg
+*.selfie.jpg
+*.face.mp4
+models/

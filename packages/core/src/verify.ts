@@ -1,3 +1,4 @@
+import { FaceEngineError } from "./errors.js";
 import { cosineSimilarity, unableToVerify } from "./similarity.js";
 import { applyThreshold, DEFAULT_THRESHOLD } from "./threshold.js";
 import {
@@ -19,6 +20,16 @@ import {
  *
  * The face engine is injected so the core stays decoupled from any specific
  * model/runtime. Engine evaluation is tracked separately (engines/face).
+ *
+ * Pipeline:
+ *   1. `engine.detect()` on the document image.
+ *   2. `engine.detect()` on the selfie image.
+ *   3. `engine.embed()` on each detected face.
+ *   4. cosine similarity between the two embeddings.
+ *   5. threshold classification.
+ *
+ * `engine.load()` is the consumer's responsibility. `verify()` does not
+ * call it.
  *
  * NOTE: MVP pipeline. MVP does not perform alignment inside core — the
  * engine is expected to crop/align from landmarks. A future revision may
@@ -90,10 +101,10 @@ async function safeDetect(
   try {
     const faces = await engine.detect(image);
     return { kind: "ok", faces };
-  } catch {
+  } catch (cause) {
     return {
       kind: "error",
-      result: unableToVerify(VerificationErrorCode.MODEL_ERROR),
+      result: engineFailureToResult(cause),
     };
   }
 }
@@ -105,12 +116,19 @@ async function safeEmbed(
   try {
     const embedding = await engine.embed(face);
     return { kind: "ok", embedding };
-  } catch {
+  } catch (cause) {
     return {
       kind: "error",
-      result: unableToVerify(VerificationErrorCode.MODEL_ERROR),
+      result: engineFailureToResult(cause),
     };
   }
+}
+
+function engineFailureToResult(cause: unknown): VerificationResult {
+  if (cause instanceof FaceEngineError) {
+    return unableToVerify(cause.code);
+  }
+  return unableToVerify(VerificationErrorCode.MODEL_ERROR);
 }
 
 function toFaceInput(image: ImageInput, detection: FaceDetection): FaceInput {

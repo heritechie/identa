@@ -10,11 +10,17 @@
   },
   "scripts": {
     "build": "tsc -b",
+    "build:fixture": "node tools/build-test-fixture.mjs",
     "typecheck": "tsc -b --noEmit",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "test:browser": "pnpm build && pnpm build:fixture && playwright test"
   },
   "devDependencies": {
+    "@playwright/test": "1.63.0",
+    "@types/node": "^26.6.3",
+    "esbuild": "0.21.5",
+    "happy-dom": "^20.14.5",
     "typescript": "^5.6.3",
     "vitest": "^2.1.5"
   }

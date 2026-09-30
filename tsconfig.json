@@ -4,6 +4,7 @@
     { "path": "./packages/core" },
     { "path": "./packages/web-component" },
     { "path": "./engines/face" },
-    { "path": "./apps/demo" }
+    { "path": "./apps/demo" },
+    { "path": "./tools/benchmark" }
   ]
 }

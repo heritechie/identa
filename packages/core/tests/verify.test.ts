@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { FaceEngineError } from "../src/errors.js";
 import { verify } from "../src/verify.js";
 import {
   VerificationErrorCode,
@@ -162,5 +163,155 @@ describe("verify (engine failure isolation)", () => {
     );
     expect(result.status).not.toBe("not_matched");
     expect(result.status).toBe("unable_to_verify");
+  });
+});
+
+describe("verify (FaceEngineError code propagation)", () => {
+  it("propagates FACE_TOO_SMALL from detect()", async () => {
+    const engine: FaceEngine = {
+      detect: async () => {
+        throw new FaceEngineError(VerificationErrorCode.FACE_TOO_SMALL);
+      },
+      embed: async () => embedding(1),
+    };
+    const result = await verify(
+      { documentImage: blankImage(), selfieImage: blankImage() },
+      engine,
+    );
+    expect(result).toEqual({
+      status: "unable_to_verify",
+      reason: VerificationErrorCode.FACE_TOO_SMALL,
+    });
+  });
+
+  it("propagates FACE_TOO_SMALL from embed()", async () => {
+    const engine: FaceEngine = {
+      detect: async () => [detection()],
+      embed: async () => {
+        throw new FaceEngineError(VerificationErrorCode.FACE_TOO_SMALL);
+      },
+    };
+    const result = await verify(
+      { documentImage: blankImage(), selfieImage: blankImage() },
+      engine,
+    );
+    expect(result.reason).toBe(VerificationErrorCode.FACE_TOO_SMALL);
+  });
+
+  it("propagates INVALID_IMAGE from detect()", async () => {
+    const engine: FaceEngine = {
+      detect: async () => {
+        throw new FaceEngineError(VerificationErrorCode.INVALID_IMAGE);
+      },
+      embed: async () => embedding(1),
+    };
+    const result = await verify(
+      { documentImage: blankImage(), selfieImage: blankImage() },
+      engine,
+    );
+    expect(result.reason).toBe(VerificationErrorCode.INVALID_IMAGE);
+  });
+
+  it("propagates IMAGE_TOO_BLURRY from embed()", async () => {
+    const engine: FaceEngine = {
+      detect: async () => [detection()],
+      embed: async () => {
+        throw new FaceEngineError(VerificationErrorCode.IMAGE_TOO_BLURRY);
+      },
+    };
+    const result = await verify(
+      { documentImage: blankImage(), selfieImage: blankImage() },
+      engine,
+    );
+    expect(result.reason).toBe(VerificationErrorCode.IMAGE_TOO_BLURRY);
+  });
+
+  it("propagates IMAGE_TOO_SMALL from selfie detect()", async () => {
+    let call = 0;
+    const engine: FaceEngine = {
+      detect: async () => {
+        call++;
+        if (call === 1) return [detection()];
+        throw new FaceEngineError(VerificationErrorCode.IMAGE_TOO_SMALL);
+      },
+      embed: async () => embedding(1),
+    };
+    const result = await verify(
+      { documentImage: blankImage(), selfieImage: blankImage() },
+      engine,
+    );
+    expect(result.reason).toBe(VerificationErrorCode.IMAGE_TOO_SMALL);
+  });
+
+  it("preserves FaceEngineError.engine attribution", async () => {
+    let observed: string | undefined;
+    const engine: FaceEngine = {
+      detect: async () => {
+        throw new FaceEngineError(
+          VerificationErrorCode.MODEL_ERROR,
+          "test-injected",
+          { engine: "stub-engine" },
+        );
+      },
+      embed: async () => {
+        observed = "should not be called";
+        return embedding(1);
+      },
+    };
+    await verify(
+      { documentImage: blankImage(), selfieImage: blankImage() },
+      engine,
+    );
+    expect(observed).toBeUndefined();
+  });
+
+  it("collapses non-FaceEngineError throws into MODEL_ERROR", async () => {
+    const engine: FaceEngine = {
+      detect: async () => [detection()],
+      embed: async () => {
+        const e = new TypeError("not a FaceEngineError");
+        throw e;
+      },
+    };
+    const result = await verify(
+      { documentImage: blankImage(), selfieImage: blankImage() },
+      engine,
+    );
+    expect(result.reason).toBe(VerificationErrorCode.MODEL_ERROR);
+  });
+});
+
+describe("verify (engine lifecycle: load? is consumer's responsibility)", () => {
+  it("does NOT call engine.load() before detect", async () => {
+    let loadCalls = 0;
+    let detectCalls = 0;
+    const engine: FaceEngine = {
+      load: async () => {
+        loadCalls++;
+      },
+      detect: async () => {
+        detectCalls++;
+        return [detection()];
+      },
+      embed: async () => embedding(1),
+    };
+    await verify(
+      { documentImage: blankImage(), selfieImage: blankImage() },
+      engine,
+    );
+    expect(loadCalls).toBe(0);
+    expect(detectCalls).toBeGreaterThan(0);
+  });
+
+  it("engine without load() works fine", async () => {
+    const engine: FaceEngine = {
+      detect: async () => [detection()],
+      embed: async () => embedding(1),
+    };
+    const result = await verify(
+      { documentImage: blankImage(), selfieImage: blankImage() },
+      engine,
+    );
+    expect(result.status).toBe("matched");
   });
 });
