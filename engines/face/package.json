@@ -1,0 +1,11 @@
+{
+  "name": "@identa/face",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Face detection + embedding engine",
+  "scripts": {
+    "build": "tsc -b",
+    "typecheck": "tsc -b --noEmit"
+  }
+}

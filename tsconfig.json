@@ -1,0 +1,9 @@
+{
+  "files": [],
+  "references": [
+    { "path": "./packages/core" },
+    { "path": "./packages/web-component" },
+    { "path": "./engines/face" },
+    { "path": "./apps/demo" }
+  ]
+}
